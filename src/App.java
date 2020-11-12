@@ -28,7 +28,6 @@ public class App extends PApplet
         {
             PApplet.main(appletArgs);
         }
-        
     }
 
 
@@ -80,7 +79,11 @@ public class App extends PApplet
     // use to implement your model matrix stack
     Stack<PMatrix3D> matrixStack = new Stack<PMatrix3D>();
 
-    PMatrix3D modelMatrix = new PMatrix3D();   // defaults to identity unless changed by drawing code.
+    PMatrix3D M = new PMatrix3D();   // defaults to identity unless changed by drawing code.
+    PMatrix3D V;
+    PMatrix3D Pr;
+    PMatrix3D Vp;
+
 
     /**
      * ViewPort. transform from NDC -> the processing viewport. Setup at the beginning of your program
@@ -198,14 +201,28 @@ public class App extends PApplet
     {
         colorMode(RGB, 1.0f);
 
-        modelMatrix.reset();
+        M.reset();
     }
 
+    float zoom = 1f;
+    float rotate = 0f;
+    float cameraCentreRange = 640f;
 
     // called roughly 60 times per second
     public void draw()
     {
         clear();
+
+        PVector cameraCentre = new PVector(
+            (float) (((float) mouseX/(float)  width - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
+            0-(float) (((float) mouseY/(float) height - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
+            1
+        );
+
+
+        V = getCameraModelMatrix(new PVector(0, 1, 1), cameraCentre, zoom);
+        Pr = getOrtho(-320, 320, -320, 320); 
+        Vp = getViwePort();
 
         // HELLO world, so to speak
         // draw a line from the top left to the center, in Processing coordinate system
@@ -228,6 +245,25 @@ public class App extends PApplet
         }
     }
 
+    public void keyPressed() 
+    {
+        if (key == KEY_ZOOM_IN)
+        {
+            zoom /= ZOOM_CHANGE;
+        }
+        else if (key == KEY_ZOOM_OUT)
+        {
+            zoom *= ZOOM_CHANGE;
+        }
+        else if (key == KEY_RESET)
+        {
+            zoom = 1f;
+            cameraCentreRange = 640f;
+            rotate = 0f;
+            orthoMode = DEFAULT_ORTHO_MODE;
+        }
+        // TODO: rotation
+    }
 
     void drawScene()
     {
@@ -272,6 +308,7 @@ public class App extends PApplet
     final char KEY_ROTATE_LEFT = '[';
     final char KEY_ZOOM_IN = '=';
     final char KEY_ZOOM_OUT = '-';
+    final char KEY_RESET = '0';
     final char KEY_ORTHO_CHANGE = 'o';
     final char KEY_TEST_MODE = 't';
     final float ANGLE_CHANGE = PI / 16; // additive
@@ -291,7 +328,8 @@ public class App extends PApplet
     }
 
 
-    OrthoMode orthoMode = OrthoMode.IDENTITY;
+    // OrthoMode orthoMode = OrthoMode.IDENTITY;
+    OrthoMode orthoMode = OrthoMode.CENTER640;
     final OrthoMode DEFAULT_ORTHO_MODE = OrthoMode.CENTER640; // <>//
 
 
@@ -326,11 +364,6 @@ public class App extends PApplet
         // vertex(x, y);
 
         PVector v = new PVector(x, y, 1);
-        PMatrix3D M = modelMatrix;
-        PMatrix3D V = getCameraModelMatrix(new PVector(0, 1, 1), new PVector(0, 0, 1), 1.0f);
-        PMatrix3D Pr = getOrtho(-320, 320, 320, -320);
-        PMatrix3D Vp = getViwePort();
-
         PMatrix3D combined = new PMatrix3D(M);
         combined.preApply(V);
         combined.preApply(Pr);
