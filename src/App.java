@@ -221,7 +221,14 @@ public class App extends PApplet
                   0     ,        0    , 0, 1
         );
         
-        PVector cameraCentre = new PVector(
+        PVector cameraCentre = (orthoMode == OrthoMode.FLIPX) ?
+        new PVector(
+            0-(float) (((float) mouseX/(float)  width - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
+            0-(float) (((float) mouseY/(float) height - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
+            1
+        )
+        :
+        new PVector(
               (float) (((float) mouseX/(float)  width - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
             0-(float) (((float) mouseY/(float) height - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
             1
@@ -232,7 +239,31 @@ public class App extends PApplet
         PVector upVector = rotateMatrix.mult(new PVector(0, 1, 1), null);    
 
         V = getCameraModelMatrix(upVector, cameraCentre, zoom);
-        Pr = getOrtho(-320, 320, -320, 320); 
+        
+        if (orthoMode == OrthoMode.BOTTOMLEFT640)
+        {
+            Pr = getOrtho(0, 640, 0, 640);
+        }
+        else if (orthoMode == OrthoMode.FLIPX)
+        {
+            Pr = getOrtho(320, -320, -320, 320); 
+        }
+        else if (orthoMode == OrthoMode.ASPECT)
+        {
+            Pr = getOrtho(-320, 320, -100, 100); 
+        }
+        else if (orthoMode == OrthoMode.IDENTITY)
+        {
+            var temp = new PMatrix3D();
+            temp.reset();
+            Pr = temp;
+
+        }
+        else // orthoMode == OrthoMode.CENTER640
+        {
+            Pr = getOrtho(-320, 320, -320, 320); 
+        }
+
         Vp = getViwePort();
 
         // HELLO world, so to speak
@@ -272,14 +303,15 @@ public class App extends PApplet
             cameraCentreRange = 640f;
             rotate = 0f;
             orthoMode = DEFAULT_ORTHO_MODE;
+            println("reset");
         }
         else if (key == KEY_ROTATE_RIGHT)
         {
-            rotate += ANGLE_CHANGE;
+            rotate += ((orthoMode == OrthoMode.FLIPX) ? -1f : 1f) * ANGLE_CHANGE;
         }
         else if (key == KEY_ROTATE_LEFT)
         {
-            rotate -= ANGLE_CHANGE;
+            rotate -= ((orthoMode == OrthoMode.FLIPX) ? -1f : 1f) * ANGLE_CHANGE;
         }
         else if (key == KEY_TEST_MODE)
         {
@@ -288,6 +320,9 @@ public class App extends PApplet
         else if (key == KEY_ORTHO_CHANGE)
         {
             // TODO: cycle through ortho mode
+            int next = (orthoMode.ordinal() + 1) % OrthoMode.values().length;
+            orthoMode = OrthoMode.values()[next];
+            println("ortho mode: " + orthoMode.name());
         }
     }
 
