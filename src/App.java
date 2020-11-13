@@ -1,9 +1,9 @@
 import java.util.Stack;
 
 import processing.core.*;
-import processing.data.*;
-import processing.event.*;
-import processing.opengl.*;
+// import processing.data.*;
+// import processing.event.*;
+// import processing.opengl.*;
 
 
 
@@ -213,25 +213,36 @@ public class App extends PApplet
     {
         clear();
 
+        
+        PMatrix3D rotateMatrix = new PMatrix3D(
+            cos(rotate), 0-sin(rotate), 0, 0,
+            sin(rotate),   cos(rotate), 0, 0,
+                  0     ,        0    , 1, 0,
+                  0     ,        0    , 0, 1
+        );
+        
         PVector cameraCentre = new PVector(
-            (float) (((float) mouseX/(float)  width - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
+              (float) (((float) mouseX/(float)  width - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
             0-(float) (((float) mouseY/(float) height - 0.5) * (orthoMode == OrthoMode.IDENTITY ? 2f : 640f) * zoom),
             1
         );
 
+        cameraCentre = rotateMatrix.mult(cameraCentre, null);
 
-        V = getCameraModelMatrix(new PVector(0, 1, 1), cameraCentre, zoom);
+        PVector upVector = rotateMatrix.mult(new PVector(0, 1, 1), null);    
+
+        V = getCameraModelMatrix(upVector, cameraCentre, zoom);
         Pr = getOrtho(-320, 320, -320, 320); 
         Vp = getViwePort();
 
         // HELLO world, so to speak
         // draw a line from the top left to the center, in Processing coordinate system
         // highlights what coordinate system you are currently in.
-        stroke(1, 1, 1);
-        beginShape(LINES);
-        myVertex(0, 0);
-        myVertex(width / 2, height / 2);
-        endShape();
+        // stroke(1, 1, 1);
+        // beginShape(LINES);
+        // myVertex(0, 0);
+        // myVertex(width / 2, height / 2);
+        // endShape();
 
         if (testMode)
         {
@@ -262,7 +273,22 @@ public class App extends PApplet
             rotate = 0f;
             orthoMode = DEFAULT_ORTHO_MODE;
         }
-        // TODO: rotation
+        else if (key == KEY_ROTATE_RIGHT)
+        {
+            rotate += ANGLE_CHANGE;
+        }
+        else if (key == KEY_ROTATE_LEFT)
+        {
+            rotate -= ANGLE_CHANGE;
+        }
+        else if (key == KEY_TEST_MODE)
+        {
+            testMode = !testMode;
+        }
+        else if (key == KEY_ORTHO_CHANGE)
+        {
+            // TODO: cycle through ortho mode
+        }
     }
 
     void drawScene()
@@ -352,17 +378,15 @@ public class App extends PApplet
     }
 
 
-    // translate the given point from object space to viewport space,
-    // then plot it with vertex.
+    /**
+     * translate the given point from object space to viewport space, then plot it with vertex.
+     * 
+     * @param x x-coordinate in object space
+     * @param y y-coordinate in object space
+     * @param debug if set to {@code true}, print out coordinates from object space and mapped viewport space
+     */
     void _myVertex(float x, float y, boolean debug)
     {
-        // TODO: more testing
-        // suggested debug:
-        // if (debug)
-        //     println(x+" "+y+" --> "+p.x+" "+p.y+" "+p.z); // pz is w, should always be 1
-        // else
-        // vertex(x, y);
-
         PVector v = new PVector(x, y, 1);
         PMatrix3D combined = new PMatrix3D(M);
         combined.preApply(V);
@@ -372,5 +396,10 @@ public class App extends PApplet
         PVector result = combined.mult(v, null);
 
         vertex(result.x, result.y);
+
+        if (debug)
+        {
+            println(x + " " + y + " --> " + result.x + " " + result.y + " " + result.z); // pz is w, should always be 1
+        }
     }
 }
