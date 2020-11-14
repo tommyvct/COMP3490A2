@@ -319,15 +319,77 @@ public class App extends PApplet
         }
         else if (key == KEY_ORTHO_CHANGE)
         {
-            // TODO: cycle through ortho mode
             int next = (orthoMode.ordinal() + 1) % OrthoMode.values().length;
             orthoMode = OrthoMode.values()[next];
             println("ortho mode: " + orthoMode.name());
         }
     }
 
+
+
+    Stack<PMatrix3D> modelMatrixStack = null;
+
+
+    void myPush()
+    {
+        if (modelMatrixStack == null)
+        {
+            modelMatrixStack = new Stack<PMatrix3D>();
+        }
+
+        modelMatrixStack.push(M);
+    }
+
+
+    void myPop()
+    {
+        if (modelMatrixStack == null || modelMatrixStack.empty())
+        {
+            println("the stack is empty!");
+            return;
+        }
+
+        M = modelMatrixStack.pop();
+    }
+
+
+    void myRotate(float theta)
+    {
+        M.preApply( new PMatrix3D(
+            cos(theta), 0-sin(theta), 0, 0,
+            sin(theta),   cos(theta), 0, 0,
+                0     ,       0     , 1, 0,
+                0     ,       0     , 0, 1
+        ));
+    }
+
+    void myScale(float s)
+    {
+        M.preApply(new PMatrix3D(
+            s, 0, 0, 0,
+            0, s, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        ));
+    }
+
+
+    void myTranslate(float tx, float ty)
+    {
+        M.preApply(new PMatrix3D(
+            1, 0, 0, tx,
+            0, 1, 0, ty,
+            0, 0, 1,  0,
+            0, 0, 0,  1
+        ));
+    }
+
+
     void drawScene()
     {
+        myPush();
+
+        // TODO
     }
 
 
